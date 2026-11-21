@@ -1,0 +1,41 @@
+name: Update Kindle Dashboard
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # Runs every hour
+  workflow_dispatch:      # Allows manual trigger anytime
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies and fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-wqy-zenhei
+          pip install -r requirements.txt
+
+      - name: Generate dashboard image
+        run: |
+          python generate.py calendar_dashboard.png
+
+      - name: Commit and push if changed
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add calendar_dashboard.png
+          git diff --staged --quiet || (git commit -m "Auto-update dashboard [skip ci]" && git push)
